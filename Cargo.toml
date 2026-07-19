@@ -1,0 +1,7 @@
+[package]
+name = "my_first_nft"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tari_template_lib = "0.29.0"

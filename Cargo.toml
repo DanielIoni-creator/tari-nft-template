@@ -1,7 +1,11 @@
 [package]
-name = "my_first_nft"
+name = "tari-nft-template"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+crate-type = ["cdylib", "lib"]
+
 [dependencies]
-tari_template_lib = "0.29.0"
+tari_template_abi = "0.18.0"
+serde = { version = "1.0", features = ["derive"] }

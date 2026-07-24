@@ -1,99 +1,64 @@
-// Copyright 2026 The Tari Project
-// SPDX-License-Identifier: BSD-3-Clause
+use tari_template_abi::*;
+use serde::{Deserialize, Serialize};
 
-use tari_template_lib::prelude::*;
+// ============================================
+// METADATI DELLA PIANTA
+// ============================================
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PlantMetadata {
+    pub name: String,
+    pub species: String,
+    pub age_years: u32,
+    pub price_in_xmr: f64,
+    pub image_hash: String,
+}
 
-/// Template per la creazione di NFT su Tari.
-/// Questo template permette di:
-/// - Creare una collezione di NFT
-/// - Mintare nuovi NFT con metadati personalizzati
-#[template]
-mod my_first_nft {
-    use super::*;
+// ============================================
+// STRUTTURA DELL'NFT PIANTA
+// ============================================
+#[derive(Clone, Debug)]
+pub struct PlantNFT {
+    pub id: u64,
+    pub owner: [u8; 32], // Address come array di 32 byte
+    pub metadata: PlantMetadata,
+}
 
-    /// Componente principale del template NFT.
-    pub struct MyFirstNFT {
-        /// Vault che contiene gli NFT di questa collezione
-        nft_vault: Vault,
-        /// Nome della collezione
-        collection_name: String,
-        /// Simbolo della collezione
-        collection_symbol: String,
-        /// Contatore degli NFT mintati
-        mint_count: u32,
+// ============================================
+// FUNZIONI DEL TEMPLATE
+// ============================================
+pub fn mint_plant(
+    owner: [u8; 32],
+    name: String,
+    species: String,
+    age_years: u32,
+    price_in_xmr: f64,
+    image_hash: String,
+) -> PlantNFT {
+    let id = 1; // ID univoco (in produzione usa un generatore)
+    let metadata = PlantMetadata {
+        name,
+        species,
+        age_years,
+        price_in_xmr,
+        image_hash,
+    };
+    PlantNFT { id, owner, metadata }
+}
+
+pub fn transfer_plant(
+    plant: PlantNFT,
+    new_owner: [u8; 32],
+) -> PlantNFT {
+    PlantNFT {
+        owner: new_owner,
+        ..plant
     }
+}
 
-    impl MyFirstNFT {
-        /// Costruttore: crea una nuova collezione NFT.
-        ///
-        /// # Arguments
-        /// * `name` - Nome della collezione (es. "My Art Collection")
-        /// * `symbol` - Simbolo della collezione (es. "MAC")
-        pub fn new(name: String, symbol: String) -> Component<Self> {
-            // 1. Creiamo la risorsa NFT (la collezione)
-            let nft_resource = ResourceBuilder::non_fungible()
-                .metadata("name", name.clone())
-                .metadata("symbol", symbol.clone())
-                .metadata("description", "Una collezione NFT su Tari")
-                .build();
+pub fn get_plant_metadata(plant: &PlantNFT) -> PlantMetadata {
+    plant.metadata.clone()
+}
 
-            // 2. Creiamo la vault vuota che conterrà gli NFT
-            let vault = Vault::new_empty(nft_resource);
-
-            // 3. Definiamo le regole di accesso
-            let access_rules = ComponentAccessRules::new()
-                .method("mint", rule![allow_all]);
-
-            // 4. Creiamo il componente
-            Component::new(Self {
-                nft_vault: vault,
-                collection_name: name,
-                collection_symbol: symbol,
-                mint_count: 0,
-            })
-            .with_access_rules(access_rules)
-            .create()
-        }
-
-        /// Mint di un nuovo NFT.
-        ///
-        /// # Arguments
-        /// * `id` - Identificatore univoco dell'NFT (es. "nft-001")
-        /// * `immutable_data` - Dati immutabili (es. URL dell'immagine)
-        /// * `mutable_data` - Dati mutabili (es. stato corrente)
-        ///
-        /// # Returns
-        /// Un Bucket contenente l'NFT appena mintato.
-        pub fn mint(
-            &mut self,
-            id: NonFungibleId,
-            immutable_data: String,
-            mutable_data: String,
-        ) -> Bucket {
-            // Otteniamo il ResourceManager per la risorsa NFT
-            let manager = self.nft_vault.get_resource_manager();
-
-            // Cloniamo l'ID perché lo useremo due volte
-            let id_clone = id.clone();
-
-            // Mintiamo l'NFT con i dati forniti
-            let nft_bucket = manager.mint_non_fungible(
-                id_clone,
-                &metadata! {
-                    "immutable" => immutable_data,
-                    "minted_at" => "2026-07-19",
-                },
-                &mutable_data,
-            );
-
-            // Depositiamo l'NFT nella vault
-            self.nft_vault.deposit(nft_bucket);
-
-            // Incrementiamo il contatore
-            self.mint_count += 1;
-
-            // Restituiamo l'NFT come Bucket
-            self.nft_vault.withdraw_non_fungible(id)
-        }
-    }
+pub fn get_plant_owner(plant: &PlantNFT) -> [u8; 32] {
+    plant.owner
 }
